@@ -19,28 +19,27 @@ load_dotenv()
 
 
 def get_pdf_data(pdf_file_path):
-  """
-  Extracts text and metadata from a PDF file.
+    """
+    Extracts text and from a PDF file.
 
-  Args:
-    pdf_file_path: The path to the PDF file.
+    Args:
+        pdf_file_path: The path to the PDF file.
 
-  Returns:
-    A dictionary containing the extracted data, including:
-      text: The complete text content of the PDF.
-      metadata: A dictionary of the PDF metadata (titles, author, etc.).
-  """
+    Returns:
+        A dictionary containing the extracted data, including:
+            text: The complete text content of the PDF.
+    """
 
-  # Open the PDF file
-  pdf_reader = PyPDF2.PdfReader(pdf_file_path)
+    pdf_reader = PyPDF2.PdfReader(pdf_file_path)
+    num_pages = len(pdf_reader.pages)
 
-  # Extract text data
-  all_page_text = ""
-  for page in pdf_reader.pages:
-    page_text = page.extract_text()
-    all_page_text += page_text
-    
-    return all_page_text
+    # Extract text from all pages
+    text = ""
+    for page_num in range(10): #range(num_pages):
+        page = pdf_reader.pages[page_num]
+        page_text = page.extract_text()
+        text += page_text
+    return text
 
 
 def clean_up(input_text):
@@ -70,7 +69,7 @@ def file_processing(file_path):
     page_content = clean_up(page_content)
         
     splitter_ques_gen = RecursiveCharacterTextSplitter(
-        chunk_size = 1000,
+        chunk_size = 1200,
         chunk_overlap = 100,
         length_function = len,
     )
@@ -81,12 +80,12 @@ def file_processing(file_path):
     ques_gen = [Document(page_content=t) for t in chunks_ques]
 
     splitter_ans_gen = RecursiveCharacterTextSplitter(
-        chunk_size = 200,
-        chunk_overlap = 100,
+        chunk_size = 300,
+        chunk_overlap = 50,
         length_function = len,
     )
 
-    answer_gen = splitter_ans_gen.split_documents(
+    answer_gen = splitter_ans_gen.split_documents(  
         ques_gen
     )
     print("Number of chunks: ", len(answer_gen))
@@ -114,7 +113,7 @@ def pipeline(file_path):
     # Prompt template for generating questions
     base_template = """
     As an expert in question generation, your task is to create insightful questions based on the given input.
-    Your goal is to help individuals gain a deeper understanding of the topic and encourage critical thinking.
+    Your goal is to help individuals gain Knowledge and understanding.
     Please generate questions based on the following input:
 
     ------------
@@ -135,7 +134,6 @@ def pipeline(file_path):
     # Template for refining existing questions
     refined_template = ("""
     As an expert in question generation, your task is to refine the existing questions based on the given context.
-    Your goal is to help individuals prepare for a knowledge test.
     We have received some practice questions to a certain extent: {existing_answer}.
     Now, we have additional context to consider:
     ------------
@@ -186,7 +184,7 @@ def pipeline(file_path):
     print("Initializing the retrieval-based QA system...")
     ans_gen_chain = RetrievalQA.from_chain_type(llm=answer_gen_pipeline, 
                                                           chain_type="stuff",
-                                                          retriever=vector_store.as_retriever(k=2))
+                                                          retriever=vector_store.as_retriever())
 
     return ans_gen_chain, filtered_ques_list
 
@@ -197,7 +195,7 @@ def gen(file_path):
     
     # Create an empty dictionary to store the questions and answers
     qa_dict = {"Question": [], "Answer": []}
-    selected_questions = random.sample(ques_list, 10)
+    selected_questions = ques_list[:15]
     
     # Iterate through the question list
 
@@ -234,7 +232,8 @@ def main():
         st.write(f"File Size: {round(uploaded_file.size / 1024, 2)} KB")
 
         # Process the PDF file using the gen() function
-        df = gen(uploaded_file)
+        with st.spinner("Processing the PDF file..."):
+            df = gen(uploaded_file)
 
         # Display the DataFrame
         st.markdown("### Processed Data")
@@ -262,9 +261,10 @@ def main():
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
 # Load the language model
-llm_ques = HuggingFaceHub(repo_id="mistralai/Mistral-7B-v0.1",model_kwargs={"temperature": 0.05, "max_new_tokens": 1048})
+llm_ques = HuggingFaceHub(repo_id="mistralai/Mistral-7B-v0.1",model_kwargs={"temperature": 0.05, "max_new_tokens": 1048, "max_length": 64})
 llm_ans = HuggingFaceHub(repo_id="mistralai/Mistral-7B-v0.1",model_kwargs={"temperature": 0.3, "max_new_tokens": 1048})
 if __name__ == "__main__":
+    #gen(r'rafale-judgment-391488.pdf')
     main()
 
 
