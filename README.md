@@ -7,7 +7,7 @@ This is a Python application that processes PDF files to generate document-based
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/your-username/pdf-processing-app.git
+    git clone https://github.com/Azreal18/PDF_QueryBot.git
     ```
 
 2. **Python Version:**
