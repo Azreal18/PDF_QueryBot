@@ -205,7 +205,7 @@ def gen(file_path):
         
         # Generate the answer using the answer generation chain
         answer = ans_gen_chain.run(question)
-        print("Answer: ", answer)
+        print("Answer: ", answer.split("\n")[0])
         print("--------------------------------------------------\n\n")
         
         # Append the question and answer to the dictionary
@@ -261,10 +261,10 @@ def main():
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
 # Load the language model
-llm_ques = HuggingFaceHub(repo_id="mistralai/Mistral-7B-v0.1",model_kwargs={"temperature": 0.05, "max_new_tokens": 1048, "max_length": 64})
+llm_ques = HuggingFaceHub(repo_id="mistralai/Mistral-7B-v0.1",model_kwargs={"temperature": 0.05, "max_length": 64})
 llm_ans = HuggingFaceHub(repo_id="mistralai/Mistral-7B-v0.1",model_kwargs={"temperature": 0.3, "max_new_tokens": 1048})
 if __name__ == "__main__":
-    #gen(r'rafale-judgment-391488.pdf')
+    gen(r'rafale-judgment-391488.pdf')
     main()
 
 
